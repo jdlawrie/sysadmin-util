@@ -6,7 +6,7 @@ multi-ping - Multi-protocol ping wrapper
 
 =head1 SYNOPSIS
 
-  multi-ping [--forever] hostname1 hostname2 .. hostnameN
+  multi-ping [-f/--forever] hostname1 hostname2 .. hostnameN
 
 =cut
 
