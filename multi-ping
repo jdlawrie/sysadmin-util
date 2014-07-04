@@ -6,14 +6,15 @@ multi-ping - Multi-protocol ping wrapper
 
 =head1 SYNOPSIS
 
-  multi-ping hostname1 hostname2 .. hostnameN
+  multi-ping [--forever] hostname1 hostname2 .. hostnameN
 
 =cut
 
 =head1 DESCRIPTION
 
 This wrapper script will invoke one of 'ping' or 'ping6', as appropriate,
-to test the connectivity of a remote host and your route to it.
+to test the connectivity of a remote host and your route to it. Each host
+is only pinged once per A/AAAA record unless --forever is passed first.
 
 =cut
 
@@ -58,10 +59,18 @@ my $timeout = 5;
 # Process each hostname specified upon the command-line.
 #
 my $count = 0;
+my $forever = 0;
 while ( my $host = shift )
 {
-    pingHost($host);
-    $count += 1;
+    if ((!$count) && ($host =~ /^--f(?:orever)?$/))  # check if the first argument is -f/--forever - backward compatible ;)
+    {
+        $forever = 1;
+    }
+    else
+    {
+        pingHost($host);
+        $count += 1;
+    }
 }
 
 #
@@ -69,7 +78,7 @@ while ( my $host = shift )
 #
 if ( $count eq 0 )
 {
-    print "Usage: multi-ping hostname1 hostname2 .. hostnameN\n";
+    print "Usage: multi-ping [--forever/-f] hostname1 [hostname2 .. hostnameN]\n";
     exit(1);
 }
 
@@ -114,7 +123,7 @@ sub pingHost
 
     if ($query)
     {
-	while (1) {
+	while (1) { # Infinite loop, will be broken out of if --forever isn't set.
             foreach my $rr ( $query->answer )
             {
                 my $ping_binary = $rr->type eq "A" ? "ping" : $rr->type eq "AAAA" ? "ping6" : "";
@@ -133,6 +142,7 @@ sub pingHost
                     }
                 }
             }
+            last if !$forever;
             sleep 1;
         }
     }
